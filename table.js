@@ -4,6 +4,8 @@ let DataGrid = (function() {
     let DataTypes = {
         'Boolean': "Boolean",
         'Numeric': "Numeric",
+		'Integer': "Integer",
+		'Float': "Float",
         'String': "String",
         'DateTime': "DateTime"
     };
@@ -18,7 +20,7 @@ let DataGrid = (function() {
         MaxValue: "MaxValue"
     }
 
-    // Variables
+	// Variables
 
     let tableBase = "<div class='data-grid' data-guid='{2}'>{3}{0}{1}{3}</div>";
     let headersBase = "<div class='data-grid-headers'><div class='data-grid-header data-grid-action-header'>Actions</div>{0}</div>";
@@ -31,30 +33,30 @@ let DataGrid = (function() {
     let dateBase = "<input type='date' value='{0}' {1}/>";
     let rowDeleteBase = "<span class='data-grid-rowdelete-btn' data-row-guid='{0}'>Delete</span>";
     let cellMaskBase = "<div class='data-grid-cell-mask' data-guid='{1}' data-row-guid='{2}' data-table-guid='{3}'>{0}</div>";
-    let pagerBase = "<div class='pager' data-table-guid='{1}'>{0}</div>";
-    let pagerFirstBase = '<span class="pager-first pager-control-item" data-pagenumber="0">&lt;&lt;</span>';
-    let pagerLastBase = '<span class="pager-last pager-control-item" data-pagenumber="{0}">&gt;&gt;</span>';
-    let pagerPrevBase = '<span class="pager-prev pager-control-item" data-pagenumber="{0}">&lt;</span>';
-    let pagerNextBase = '<span class="pager-next pager-control-item" data-pagenumber="{0}">&gt;</span>';
-    let pagerStatsBase = '<span class="pager-stats pager-control-item">Page: {0} of {1} | Showing records {2} - {3} of {4}</span>';
+	let pagerBase = "<div class='pager' data-table-guid='{1}'>{0}</div>";
+	let pagerFirstBase = '<span class="pager-first pager-control-item" data-pagenumber="0">&lt;&lt;</span>';
+	let pagerLastBase =  '<span class="pager-last pager-control-item" data-pagenumber="{0}">&gt;&gt;</span>';
+	let pagerPrevBase = '<span class="pager-prev pager-control-item" data-pagenumber="{0}">&lt;</span>';
+	let pagerNextBase =  '<span class="pager-next pager-control-item" data-pagenumber="{0}">&gt;</span>';
+	let pagerStatsBase = '<span class="pager-stats pager-control-item">Page: {0} of {1} | Showing records {2} - {3} of {4}</span>';
+	
 
-
-
-    //Classes
-
-    function HtmlDataGrid(dataGrid) {
-        this.DataGrid = dataGrid;
-        this.Html = '';
-        this.DomLink = null;
-        this.BoundElm = null;
-    }
-    HtmlDataGrid.prototype.SetDataSource = function(data) {
-            this.DataGrid.SetDataSource(data);
-            this.ConstructHtml();
-        }
-        // DOM Value get/set
+	
+	//Classes
+	
+	function HtmlDataGrid(dataGrid){
+		this.DataGrid = dataGrid;
+		this.Html = '';
+		this.DomLink = null;
+		this.BoundElm = null;			
+	}
+	HtmlDataGrid.prototype.SetDataSource = function(data){
+		this.DataGrid.SetDataSource(data);
+		this.ConstructHtml();
+	}
+	// DOM Value get/set
     HtmlDataGrid.prototype.GetElmValue = function(cell) {
-        let scope = this;
+		let scope = this;
         let elm = scope.DomQueryForGuid(cell.Guid);
         if (elm == null) {
             return null;
@@ -63,15 +65,18 @@ let DataGrid = (function() {
 
         if (cell.Header.Type == DataTypes.Boolean) {
             return elm.checked;
-        } else if (cell.Header.Type == DataTypes.Numeric) {
+        } else if (cell.Header.Type == DataTypes.Numeric || cell.Header.Type == DataTypes.Float) {
             return parseFloat(elm.value);
-        } else if (cell.Header.Type == DataTypes.DateTime) {
+        } else if (cell.Header.Type == DataTypes.Integer) {
+            return parseInt(elm.value);
+        } 
+		else if (cell.Header.Type == DataTypes.DateTime) {
             return new Date(elm.value);
         }
         return elm.value;
     }
     HtmlDataGrid.prototype.SetElmValue = function(cell) {
-        let scope = this;
+		let scope = this;
         let elm = scope.DomQueryForGuid(cell.Guid);
         if (elm == null) {
             return null;
@@ -80,7 +85,7 @@ let DataGrid = (function() {
         if (cell.Header.Type == DataTypes.Boolean) {
             elm.checked = cell.Value;
             elm.textContent = cell.Value;
-        } else if (cell.Header.Type == DataTypes.Numeric) {
+        } else if (cell.Header.Type == DataTypes.Numeric || cell.Header.Type == DataTypes.Integer || cell.Header.Type == DataTypes.Float) {
             elm.value = cell.Value;
             elm.textContent = cell.Value;
         } else if (cell.Header.Type == DataTypes.DateTime) {
@@ -92,8 +97,8 @@ let DataGrid = (function() {
         }
     }
 
-    HtmlDataGrid.prototype.SyncCellToElm = function(cell) {
-        let scope = this;
+	HtmlDataGrid.prototype.SyncCellToElm = function(cell){
+		let scope = this;
         let elm = scope.DomQueryForGuid(cell.Guid);
         if (elm == null) {
             return;
@@ -102,7 +107,7 @@ let DataGrid = (function() {
         if (cell.Header.Type == DataTypes.Boolean) {
             elm.checked = cell.Value;
             elm.textContent = cell.Value;
-        } else if (cell.Header.Type == DataTypes.Numeric) {
+        } else if (cell.Header.Type == DataTypes.Numeric || cell.Header.Type == DataTypes.Integer || cell.Header.Type == DataTypes.Float) {
             elm.value = cell.Value;
             elm.textContent = cell.Value;
         } else if (cell.Header.Type == DataTypes.DateTime) {
@@ -112,35 +117,37 @@ let DataGrid = (function() {
             elm.value = cell.Value;
             elm.textContent = cell.Value;
         }
-    }
-    HtmlDataGrid.prototype.SyncElmToCell = function(elm) {
-        let scope = this;
-        let guid = elm.dataset.guid;
-        let cell = scope.DataGrid.FindCellByCellGuid(guid);
+	}
+	HtmlDataGrid.prototype.SyncElmToCell = function(elm){
+		let scope = this;
+		let guid = elm.dataset.guid;
+		let cell = scope.DataGrid.FindCellByCellGuid(guid);
         if (cell == null) {
             return;
         }
         elm = elm.childNodes[0];
 
         if (cell.Header.Type == DataTypes.Boolean) {
-            cell.Value = elm.checked;
-        } else if (cell.Header.Type == DataTypes.Numeric) {
-            cell.Value = parseFloat(elm.value);
-        } else if (cell.Header.Type == DataTypes.DateTime) {
-            cell.Value = new Date(elm.value);
+			cell.Value = elm.checked;
+        } else if (cell.Header.Type == DataTypes.Numeric || cell.Header.Type == DataTypes.Float) {
+			cell.Value = parseFloat(elm.value);
+        } else if (cell.Header.Type == DataTypes.Integer) {
+			cell.Value = parseInt(elm.value);
+		} else if (cell.Header.Type == DataTypes.DateTime) {
+			cell.Value = new Date(elm.value);
         } else {
-            cell.Value = elm.value;
-        }
-    }
-    HtmlDataGrid.prototype.SetCellValue = function(cell, val) {
-        let scope = this;
-        cell.Value = val;
-        scope.SyncCellToElm(cell);
-    }
-
-    // Cell interactivity toggling
+			cell.Value = elm.value;
+		}
+	}
+	HtmlDataGrid.prototype.SetCellValue = function(cell,val){
+		let scope = this;
+		cell.Value = val;
+		scope.SyncCellToElm(cell);
+	}
+		
+	// Cell interactivity toggling
     HtmlDataGrid.prototype.SetCellInteractive = function(cell) {
-        let scope = this;
+		let scope = this;
         let dom = scope.DomQueryForGuid(cell.Guid);
         let interactive = CreateInteractiveCell(cell, cell.Row, cell.Header);
 
@@ -164,7 +171,7 @@ let DataGrid = (function() {
         }
     }
     HtmlDataGrid.prototype.SetCellMask = function(cell) {
-        let scope = this;
+		let scope = this;
         let dom = scope.DomQueryForGuid(cell.Guid);
         let mask = CreateMaskCellHtml(cell, cell.Row, cell.Header);
 
@@ -173,23 +180,23 @@ let DataGrid = (function() {
         let newNode = div.childNodes[0];
         dom.parentNode.replaceChild(newNode, dom);
 
-    }
-    HtmlDataGrid.prototype.DomQueryForGuid = function(guid) {
-        let scope = this;
-        let query = StringFormat("[data-guid='{0}']", [guid]);
-        let arr = scope.DomLink.querySelectorAll(query);
-        if (arr.length == 0) {
-            return null;
-        }
-        return arr[0];
-    }
-    HtmlDataGrid.prototype.DataBind = function() {
-        let scope = this;
-        scope.DomBind(scope.BoundElm);
-    }
+    }  
+	HtmlDataGrid.prototype.DomQueryForGuid = function(guid) {
+		let scope = this;
+		let query = StringFormat("[data-guid='{0}']", [guid]);
+		let arr = scope.DomLink.querySelectorAll(query);
+		if (arr.length == 0) {
+			return null;
+		}
+		return arr[0];
+	}
+	HtmlDataGrid.prototype.DataBind = function(){
+		let scope = this;
+		scope.DomBind(scope.BoundElm);
+	}
     HtmlDataGrid.prototype.DomBind = function(elm) {
-        let grid = this;
-        this.ConstructHtml();
+		let grid = this;
+		this.ConstructHtml();
         grid.BoundElm = elm;
         elm.innerHTML = grid.Html;
         grid.DomLink = elm.childNodes[0];
@@ -290,7 +297,7 @@ let DataGrid = (function() {
                     }
                     let sortDir = header.SortDir;
                     grid.DataGrid.SortColumn(header.Column, header.SortDir);
-                    grid.DataGrid.PageNumber = 0;
+					grid.DataGrid.PageNumber = 0;
                     grid.DataBind();
                     if (sortDir == SortOrders.Asc) {
                         header.SortDir = SortOrders.Desc;
@@ -313,31 +320,31 @@ let DataGrid = (function() {
                 }
             );
         }
-
-        function bindPagerListener(grid) {
+		
+		function bindPagerListener(grid) {
             grid.DomLink.addEventListener("click",
-                function onPagerClick(e) {
-                    if (e.target.className.indexOf("pager-control-item") > -1) {
-                        var pagenumber = e.target.dataset.pagenumber;
-                        if (e.target.className.indexOf("pager-first") > -1) {
-                            grid.GoToPage(0);
-                            return;
-                        }
-                        if (e.target.className.indexOf("pager-last") > -1) {
-                            grid.GoToPage(pagenumber);
-                            return;
-                        }
-                        if (e.target.className.indexOf("pager-prev") > -1) {
-                            grid.PrevPage();
-                            return;
-                        }
-                        if (e.target.className.indexOf("pager-next") > -1) {
-                            grid.NextPage();
-                            return;
-                        }
-                    }
-                });
-        }
+			function onPagerClick(e){
+					if(e.target.className.indexOf("pager-control-item") > -1){
+						var pagenumber = e.target.dataset.pagenumber;
+						if(e.target.className.indexOf("pager-first") > -1){
+							grid.GoToPage(0);
+							return;
+						}
+						if(e.target.className.indexOf("pager-last") > -1){
+							grid.GoToPage(pagenumber);
+							return;
+						}
+						if(e.target.className.indexOf("pager-prev") > -1){
+							grid.PrevPage();
+							return;
+						}
+						if(e.target.className.indexOf("pager-next") > -1){
+							grid.NextPage();
+							return;
+						}
+					}
+			});
+		}
 
 
         // Bind Cell Change events
@@ -346,69 +353,69 @@ let DataGrid = (function() {
         bindDeleteListener(grid);
         bindSortListener(grid);
         bindClickListener(grid);
-        bindPagerListener(grid);
+		bindPagerListener(grid);
 
 
     }
-    HtmlDataGrid.prototype.ConstructHtml = function() {
-        let grid = this;
+	HtmlDataGrid.prototype.ConstructHtml = function() {
+		let grid = this;
         grid.Html = CreateTableHtml(grid.DataGrid.Table);
     }
-
-    // Paging
+	
+	// Paging
     HtmlDataGrid.prototype.NextPage = function() {
-        let scope = this;
+		let scope = this;
         scope.DataGrid.NextPage();
-        scope.DataBind();
+		scope.DataBind();
     }
     HtmlDataGrid.prototype.PrevPage = function() {
-        let scope = this;
+		let scope = this;
         scope.DataGrid.PrevPage();
-        scope.DataBind();
+		scope.DataBind();
     }
     HtmlDataGrid.prototype.GoToPage = function(i) {
-        let scope = this;
+		let scope = this;
         scope.DataGrid.GoToPage(i);
-        scope.DataBind();
+		scope.DataBind();
     }
-
-    function DataGrid(data) {
-        let grid = this;
-        grid.Guid = CreateGuid();
-        grid.Data = data;
-        grid.Sortable = true;
-        grid.Deletable = true;
-        grid.Addable = true;
-        grid.Pageable = true;
-        grid.Events = {};
-        grid.Events.OnRowAdded = [];
-        grid.Events.OnColumnAdded = [];
-        grid.Events.OnRowDeleted = [];
-        grid.Events.OnColumnDeleted = [];
-        grid.Events.OnCellFormatting = [];
-        grid.Events.OnDataBind = [];
-        grid.Events.OnRowDataBind = [];
-        grid.Events.OnCellDataBind = [];
-        grid.Events.OnCellChanged = [];
-        grid.Events.OnCellKeyup = [];
-        grid.Events.OnCellValueCorrected = [];
-        grid.Events.OnNextPage = [];
-        grid.Events.OnPrevPage = [];
-        grid.Events.OnGoToPage = [];
-        grid.PageNumber = 0;
-        grid.ItemsPerPage = 999999999;
-        Object.defineProperty(grid, "TotalPages", {
-            get: function() {
-                return Math.ceil(grid.Table.Rows.length / grid.ItemsPerPage);
-            }
-        });
-    }
+	
+	function DataGrid(data){
+		let grid = this;
+		grid.Guid = CreateGuid();
+		grid.Data = data;
+		grid.Sortable = true;
+		grid.Deletable = true;
+		grid.Addable = true;
+		grid.Pageable = true;
+		grid.Events = {};
+		grid.Events.OnRowAdded = [];
+		grid.Events.OnColumnAdded = [];
+		grid.Events.OnRowDeleted = [];
+		grid.Events.OnColumnDeleted = [];
+		grid.Events.OnCellFormatting = [];
+		grid.Events.OnDataBind = [];
+		grid.Events.OnRowDataBind = [];
+		grid.Events.OnCellDataBind = [];
+		grid.Events.OnCellChanged = [];
+		grid.Events.OnCellKeyup = [];
+		grid.Events.OnCellValueCorrected = [];
+		grid.Events.OnNextPage = [];
+		grid.Events.OnPrevPage = [];
+		grid.Events.OnGoToPage = [];
+		grid.PageNumber = 0;
+		grid.ItemsPerPage = 999999999;
+		Object.defineProperty(grid, "TotalPages", {
+			get: function() {
+				return Math.ceil(grid.Table.Rows.length / grid.ItemsPerPage);
+			}
+		});
+	}
 
     let grid = DataGrid.prototype;
-    grid.CreateHtmlGrid = function() {
-        let scope = this;
-        return new HtmlDataGrid(scope);
-    }
+	grid.CreateHtmlGrid = function(){
+		let scope = this;
+		return new HtmlDataGrid(scope);
+	}
     grid.BindEvent = BindEvent;
     grid.UnBindEvent = UnBindEvent;
     grid.FireEvent = FireEvent;
@@ -416,17 +423,17 @@ let DataGrid = (function() {
     grid.DataTypes = DataTypes;
     grid.CellCorrectReasons = CellCorrectReasons;
 
-    // Querying
+	// Querying
     grid.FindRowByRowGuid = function(guid) {
-        let scope = this;
+		let scope = this;
         return scope.Table.RowHash.get(guid);
     }
     grid.FindCellByCellGuid = function(guid) {
-        let scope = this;
+		let scope = this;
         return scope.Table.CellHash.get(guid);
     }
     grid.FindHeaderByHeaderGuid = function(guid) {
-        let scope = this;
+		let scope = this;
         for (let i = 0; i < scope.Table.Headers.length; i++) {
             let header = scope.Table.Headers[i];
             if (header.Guid == guid) {
@@ -435,7 +442,7 @@ let DataGrid = (function() {
         }
     }
     grid.FindColumnByColumnGuid = function(guid) {
-        let scope = this;
+		let scope = this;
         let header = scope.FindHeaderByHeaderGuid(guid);
         if (!header) {
             return null;
@@ -444,9 +451,9 @@ let DataGrid = (function() {
     }
 
 
-    // Sorting
-    grid.SortColumn = function(column, sortOrder) {
-        let scope = this;
+	// Sorting
+	grid.SortColumn = function(column, sortOrder) {
+		let scope = this;
         if (!scope.Sortable) {
             return;
         }
@@ -459,35 +466,31 @@ let DataGrid = (function() {
         scope.Table.Rows = rows;
     }
     grid.OrderBy = function(comparer) {
-        let scope = this;
+		let scope = this;
         if (!scope.Sortable) {
             return;
         }
         return new OrderBy(scope.Table.Rows, comparer);
     }
     grid.OrderByColumn = function(column, sortOrder) {
-        let scope = this;
+		let scope = this;
         if (!scope.Sortable) {
             return;
         }
         return new OrderByColumn(scope.Table.Rows, column, sortOrder);
     }
-
-    // Extending
-    grid.AddRow = function() {
-        let scope = this;
+    
+	// Extending
+	grid.AddRow = function() {
+		let scope = this;
         if (!scope.Addable) {
             return false;
         }
-        let row = new Row({
-            Cells: []
-        }, scope.Table);
+        let row = new Row({Cells: []}, scope.Table);
         for (let i = 0; i < scope.Table.Headers.length; i++) {
             let header = scope.Table.Headers[i];
             let val = GetDefaultData(header.Type);
-            let cell = new Cell({
-                Value: val
-            }, row, header);
+			let cell = new Cell({Value: val}, row, header);
             row.Cells.push(cell);
         }
         let rtn = FireEvent(scope.Events.OnRowAdded, [row]);
@@ -498,7 +501,7 @@ let DataGrid = (function() {
 
     }
     grid.DeleteRow = function(row) {
-        let scope = this;
+		let scope = this;
         if (!scope.Deletable) {
             return false;
         }
@@ -515,7 +518,7 @@ let DataGrid = (function() {
 
     }
     grid.AddColumn = function(hhr) {
-        let scope = this;
+		let scope = this;
         if (!scope.Addable) {
             return false;
         }
@@ -534,9 +537,7 @@ let DataGrid = (function() {
         for (let i = 0; i < scope.Table.Rows.length; i++) {
             let row = scope.Table.Rows[i];
             let val = GetDefaultData(header.Type);
-            let cell = new Cell({
-                Value: val
-            }, row, scope.Table);
+            let cell = new Cell({Value: val},row,scope.Table);
             row.Cells[column.Index] = cell;
             column.Cells.push(cell);
         }
@@ -544,7 +545,7 @@ let DataGrid = (function() {
 
     }
     grid.DeleteColumn = function(column) {
-        let scope = this;
+		let scope = this;
         if (!scope.Deletable) {
             return false;
         }
@@ -565,38 +566,38 @@ let DataGrid = (function() {
 
     }
 
-    // Paging
+	// Paging
     grid.NextPage = function() {
-        let scope = this;
-        if (scope.Pageable === false) {
-            return false;
-        }
+		let scope = this;
+		if(scope.Pageable === false){
+			return false;
+		}
         let total = scope.TotalPages;
         scope.PageNumber = Math.min(total, scope.PageNumber + 1);
-        FireEvent(scope.Events.OnNextPage, [scope.PageNumber]);
+		FireEvent(scope.Events.OnNextPage, [scope.PageNumber]);
     }
     grid.PrevPage = function() {
-        let scope = this;
-        if (scope.Pageable === false) {
-            return false;
-        }
+		let scope = this;
+		if(scope.Pageable === false){
+			return false;
+		}
         scope.PageNumber = Math.max(0, scope.PageNumber - 1);
-        FireEvent(scope.Events.OnPrevPage, [scope.PageNumber]);
+		FireEvent(scope.Events.OnPrevPage, [scope.PageNumber]);
     }
     grid.GoToPage = function(i) {
-        let scope = this;
-        if (scope.Pageable === false) {
-            return false;
-        }
+		let scope = this;
+		if(scope.Pageable === false){
+			return false;
+		}
         let total = scope.TotalPages;
         scope.PageNumber = Math.min(total, i);
         scope.PageNumber = Math.max(scope.PageNumber, 0);
-        FireEvent(scope.Events.OnGoToPage, [scope.PageNumber]);
+		FireEvent(scope.Events.OnGoToPage, [scope.PageNumber]);
     }
 
-    // JSON Utilities
-    grid.GetHeaderJSON = function() {
-        let scope = this;
+	// JSON Utilities
+	grid.GetHeaderJSON = function() {
+		let scope = this;
         let json = [];
         for (let i = 0; i < scope.Table.Headers.length; i++) {
             let header = scope.Table.Headers[i];
@@ -606,7 +607,7 @@ let DataGrid = (function() {
         return json;
     }
     grid.GetRowsJSON = function() {
-        let scope = this;
+		let scope = this;
         let rows = [];
         for (let i = 0; i < scope.Table.Rows.length; i++) {
             let row = scope.Table.Rows[i];
@@ -616,21 +617,21 @@ let DataGrid = (function() {
         return rows;
     }
     grid.ToJSON = function() {
-        let scope = this;
+		let scope = this;
         let data = {};
         data.Headers = scope.GetHeaderJSON();
         data.Rows = scope.GetRowsJSON();
         return data;
     }
     grid.ToJSONString = function() {
-        let scope = this;
+		let scope = this;
         let json = scope.ToJSON();
         return JSON.stringify(json);
-    }
-
-    // Data Filtering/Querying
-    grid.FilterRows = function(query) {
-        let scope = this;
+    }   
+	
+	// Data Filtering/Querying
+	grid.FilterRows = function(query) {
+		let scope = this;
         let g = new DataGrid();
         let headers = scope.GetHeaderJSON();
         let rows = [];
@@ -648,28 +649,28 @@ let DataGrid = (function() {
         g.SetDataSource(data);
         return g;
     }
-    grid.FilterColumn = function(column, query) {
-            let scope = this;
-            let g = new DataGrid();
-            let headers = scope.GetHeaderJSON();
-            let rows = [];
-            for (let i = 0; i < column.Cells.length; i++) {
-                let cell = column.Cells[i];
-                let result = query(cell);
-                if (result) {
-                    let row = RowToJSON(cell.Row);
-                    rows.push(row);
-                }
+	grid.FilterColumn = function(column,query) {
+		let scope = this;
+        let g = new DataGrid();
+        let headers = scope.GetHeaderJSON();
+        let rows = [];
+        for (let i = 0; i < column.Cells.length; i++) {
+            let cell = column.Cells[i];
+            let result = query(cell);
+            if (result) {
+                let row = RowToJSON(cell.Row);
+                rows.push(row);
             }
-            let data = {};
-            data.Headers = headers;
-            data.Rows = rows;
-            g.SetDataSource(data);
-            return g;
         }
-        // TODO-Rename to ChooseColumns
+        let data = {};
+        data.Headers = headers;
+        data.Rows = rows;
+        g.SetDataSource(data);
+        return g;
+    }
+	// TODO-Rename to ChooseColumns
     grid.FilterColumns = function(query) {
-        let scope = this;
+		let scope = this;
         let g = new DataGrid();
         let headers = [];
         let rows = [];
@@ -700,80 +701,76 @@ let DataGrid = (function() {
         return g;
     }
 
-    // Data Binding
+	// Data Binding
     grid.SetDataSource = function(data) {
-        let scope = this;
+		let scope = this;
         FireEvent(scope.Events.OnDataBind, [data]);
         scope.Table = new Table(data, scope);
     }
     grid.DataBind = function() {
-        let scope = this;
+		let scope = this;
         scope.PageNumber = 0;
         scope.SetDataSource(scope.Table);
         //grid.DomBind(grid.BoundElm);
 
     }
 
-    function Table(data, grid) {
+	function Table(data, grid){
 
-        let scope = this;
-        scope.DataGrid = grid;
-        grid.Table = scope;
+		let scope = this;
+		scope.DataGrid = grid;
+		grid.Table = scope;
 
-        scope.Headers = ExtractHeaders(data.Headers);
-        scope.Columns = ExtractColumns(scope.Headers);
-        scope.Rows = ExtractRows(data.Rows);
-
-        function ExtractHeaders(headers) {
-            let rtn = [];
-            for (let i = 0; i < headers.length; i++) {
-                let header = headers[i];
-                rtn.push(new Header(header, i, scope));
-            }
-            return rtn;
-        }
-
-        function ExtractColumns(headers) {
-            let rtn = [];
-            for (let i = 0; i < headers.length; i++) {
-                let header = headers[i];
-                rtn.push(new Column(header));
-            }
-            return rtn;
-        }
-
-        function ExtractRows(rows) {
-            let rtn = [];
-            for (let i = 0; i < rows.length; i++) {
-                let rowProto = rows[i];
-                let row = new Row(rowProto, scope);
-                if (row === null) {
-                    continue;
-                }
-                rtn.push(row);
-            }
-            return rtn;
-        }
-    }
-
-    function Header(header, index, table) {
-        let scope = this;
-        scope.Guid = CreateGuid();
-        scope.Table = table;
-        scope.Type = header.Type;
-        scope.ReadOnly = header.ReadOnly;
+		scope.Headers = ExtractHeaders(data.Headers);
+		scope.Columns = ExtractColumns(scope.Headers);
+		scope.Rows = ExtractRows(data.Rows);
+		
+		function ExtractHeaders(headers){
+			let rtn = [];
+			for(let i = 0; i < headers.length; i++){
+			   let header = headers[i];
+			   rtn.push( new Header(header, i , scope) );
+			}
+			return rtn;
+		}
+		function ExtractColumns(headers){
+			let rtn = [];
+			for(let i = 0; i < headers.length; i++){
+			   let header = headers[i];
+			   rtn.push( new Column(header) );
+			}
+			return rtn;			
+		}
+		function ExtractRows(rows){
+			let rtn = [];
+			for(let i = 0; i < rows.length; i++){
+			   let rowProto = rows[i];
+			   let row = new Row(rowProto,scope);
+			   if(row === null){
+				   continue;
+			   }
+			   rtn.push( row );
+			}
+			return rtn;
+		}
+	}
+	function Header(header, index, table){
+		let scope = this;
+		scope.Guid = CreateGuid();
+		scope.Table = table;
+		scope.Type = header.Type;
+		scope.ReadOnly = header.ReadOnly;
         scope.Name = header.Name;
         scope.Deletable = header.Deletable;
         scope.MinLength = header.MinLength;
         scope.MaxLength = header.MaxLength;
         scope.MinValue = header.MinValue;
         scope.MaxValue = header.MaxValue;
-        scope.Data = header.Data;
-        scope.TableGuid = table.Guid;
-        scope.Index = index;
+		scope.Data = header.Data;
+		scope.TableGuid = table.Guid;
+		scope.Index = index;
 
-    }
-
+	}
     function Column(header) {
         let column = {
             Header: header,
@@ -784,38 +781,36 @@ let DataGrid = (function() {
         header.Column = column;
         return column;
     }
-
-    function Row(row, table) {
-        let scope = this;
-        scope.Data = row.Data;
-        scope.ReadOnly = row.ReadOnly;
-        scope.Deletable = row.Deletable;
+	function Row(row, table){
+		let scope = this;
+		scope.Data = row.Data;
+		scope.ReadOnly = row.ReadOnly;
+		scope.Deletable = row.Deletable;
         let headers = table.Headers;
         let cells = row.Cells;
 
         scope.Table = table;
         scope.Headers = table.Headers;
 
-        scope.Cells = [];
+		scope.Cells = [];
 
         for (let i = 0; i < cells.length; i++) {
             let cellProto = cells[i];
-            let header = scope.Headers[i];
-            let cell = new Cell(cellProto, scope, header);
-            scope.Cells.push(cell);
+			let header = scope.Headers[i];
+			let cell = new Cell(cellProto,scope,header);
+			scope.Cells.push(cell);
         }
-
+		
         let rtns = FireEvent(scope.Table.DataGrid.Events.OnRowDataBind, [scope]);
         if (IsFireEventResultFalse(rtns)) {
             return null;
         }
 
-    }
-
-    function Cell(cell, row, header) {
-        let scope = this;
-        scope.Data = cell.Data;
-        scope.ReadOnly = cell.ReadOnly;
+	}
+	function Cell(cell,row,header){
+		let scope = this;
+		scope.Data = cell.Data;
+		scope.ReadOnly = cell.ReadOnly;
         scope.Value = ParseData(cell.Value, header.Type);
         scope.Row = row;
         scope.Table = row.Table;
@@ -824,99 +819,100 @@ let DataGrid = (function() {
         scope.Table.Columns[header.Index].Cells.push(scope);
         FitBoundsCellValue(scope);
         EnforceLengthsCellValue(scope);
-        FireEvent(scope.Table.DataGrid.Events.OnCellDataBind, [scope]);
-    }
+        FireEvent(scope.Table.DataGrid.Events.OnCellDataBind, [scope]);	
+	}
+	
+	function Pager(totalItems,pageNumber,itemsPerPage){
+		this.TotalItems = totalItems;
+		this.PageNumber = pageNumber;
+		this.ItemsPerPage = itemsPerPage;
+	}
+	Object.defineProperty(Pager.prototype, "TotalPages", {
+		get: function TotalPages() {
+			 return Math.ceil(this.TotalItems / this.ItemsPerPage);
+		}
+	});	
+	Object.defineProperty(Pager.prototype, "PageNumberOneBased", {
+		get: function PageNumberOneBased() {
+			 return this.PageNumber + 1;
+		}
+	});	
+	Object.defineProperty(Pager.prototype, "LastPageOneBased", {
+		get: function LastPageOneBased() {
+			 return this.LastPage + 1;
+		}
+	});	
+	Object.defineProperty(Pager.prototype, "PreviousPage", {
+		get: function PreviousPage() {
+                if (this.HasPreviousPage === false)
+                {
+                    return null;
+                }
+                return this.PageNumber - 1;
+		}
+	});	
+	Object.defineProperty(Pager.prototype, "NextPage", {
+		get: function NextPage() {
+                if (this.HasNextPage == false)
+                {
+                    return null;
+                }
+                return this.PageNumber + 1;
+		}
+	});	
+	Object.defineProperty(Pager.prototype, "LastPage", {
+		get: function LastPage() {
+			return this.TotalPages - 1;
+		}
+	});	
+	Object.defineProperty(Pager.prototype, "HasNextPage", {
+		get: function HasNextPage() {
+			return this.TotalPages > 0 && this.PageNumber < this.LastPage; 
+		}
+	});	
+	Object.defineProperty(Pager.prototype, "HasPreviousPage", {
+		get: function HasPreviousPage() {
+			return this.TotalPages > 0 && this.PageNumber > 0; 
+		}
+	});	
+	Object.defineProperty(Pager.prototype, "IsPageNumberValid", {
+		get: function IsPageNumberValid() {
+			return this.PageNumber >= 0 && this.PageNumber < this.TotalPages;
+		}
+	});	
+	Object.defineProperty(Pager.prototype, "StartingItemIndex", {
+		get: function StartingItemIndex() {
+                if (this.TotalItems == 0 || this.IsPageNumberValid == false)
+                {
+                    return null;
+                }
+                return (this.PageNumber*this.ItemsPerPage) + 1;
+		}
+	});		
+	Object.defineProperty(Pager.prototype, "EndingItemIndex", {
+		get: function EndingItemIndex() {
+           if (this.TotalItems == 0 || this.IsPageNumberValid == false){
+                    return null;
+            }
+                var idx = (this.PageNumber * this.ItemsPerPage) + this.ItemsPerPage;
+                return Math.min(this.TotalItems, idx);
+		}
+	});	
 
-    function Pager(totalItems, pageNumber, itemsPerPage) {
-        this.TotalItems = totalItems;
-        this.PageNumber = pageNumber;
-        this.ItemsPerPage = itemsPerPage;
-    }
-    Object.defineProperty(Pager.prototype, "TotalPages", {
-        get: function TotalPages() {
-            return Math.ceil(this.TotalItems / this.ItemsPerPage);
-        }
-    });
-    Object.defineProperty(Pager.prototype, "PageNumberOneBased", {
-        get: function PageNumberOneBased() {
-            return this.PageNumber + 1;
-        }
-    });
-    Object.defineProperty(Pager.prototype, "LastPageOneBased", {
-        get: function LastPageOneBased() {
-            return this.LastPage + 1;
-        }
-    });
-    Object.defineProperty(Pager.prototype, "PreviousPage", {
-        get: function PreviousPage() {
-            if (this.HasPreviousPage === false) {
-                return null;
-            }
-            return this.PageNumber - 1;
-        }
-    });
-    Object.defineProperty(Pager.prototype, "NextPage", {
-        get: function NextPage() {
-            if (this.HasNextPage == false) {
-                return null;
-            }
-            return this.PageNumber + 1;
-        }
-    });
-    Object.defineProperty(Pager.prototype, "LastPage", {
-        get: function LastPage() {
-            return this.TotalPages - 1;
-        }
-    });
-    Object.defineProperty(Pager.prototype, "HasNextPage", {
-        get: function HasNextPage() {
-            return this.TotalPages > 0 && this.PageNumber < this.LastPage;
-        }
-    });
-    Object.defineProperty(Pager.prototype, "HasPreviousPage", {
-        get: function HasPreviousPage() {
-            return this.TotalPages > 0 && this.PageNumber > 0;
-        }
-    });
-    Object.defineProperty(Pager.prototype, "IsPageNumberValid", {
-        get: function IsPageNumberValid() {
-            return this.PageNumber >= 0 && this.PageNumber < this.TotalPages;
-        }
-    });
-    Object.defineProperty(Pager.prototype, "StartingItemIndex", {
-        get: function StartingItemIndex() {
-            if (this.TotalItems == 0 || this.IsPageNumberValid == false) {
-                return null;
-            }
-            return (this.PageNumber * this.ItemsPerPage) + 1;
-        }
-    });
-    Object.defineProperty(Pager.prototype, "EndingItemIndex", {
-        get: function EndingItemIndex() {
-            if (this.TotalItems == 0 || this.IsPageNumberValid == false) {
-                return null;
-            }
-            var idx = (this.PageNumber * this.ItemsPerPage) + this.ItemsPerPage;
-            return Math.min(this.TotalItems, idx);
-        }
-    });
-
-    // Events
+	// Events
     function BindEvent(eventProp, action) {
         eventProp.push(action);
     }
-
     function UnBindEvent(eventProp, action) {
         let idx = eventProp.indexOf(action);
         if (idx > -1) {
             eventProp.splice(idx, 1);
         }
     }
-
     function FireEvent(eventProp, args) {
-        if (eventProp.length === 0) {
-            return [];
-        }
+		if(eventProp.length === 0){
+			return [];
+		}
         let rtns = [];
         for (let i = 0; i < eventProp.length; i++) {
             let action = eventProp[i];
@@ -925,7 +921,6 @@ let DataGrid = (function() {
         }
         return rtns;
     }
-
     function IsFireEventResultFalse(rtn) {
         for (let i = 0; i < rtn.length; i++) {
             if (rtn[i] == false) {
@@ -933,12 +928,11 @@ let DataGrid = (function() {
             }
         }
     }
-
-    // Sorting
+	
+	// Sorting
     function OrderBy(data, comparer) {
         return new ThenBy(data, comparer);
     }
-
     function ThenBy(data, comparer) {
         let tb = {};
         tb.Data = data;
@@ -953,11 +947,9 @@ let DataGrid = (function() {
         }
         return tb;
     }
-
     function OrderByColumn(rows, column, sortOrder) {
         return new ThenByColumn(rows, column, sortOrder);
     }
-
     function ThenByColumn(rows, column, sortOrder) {
         let tb = {};
         tb.Rows = rows;
@@ -1012,7 +1004,6 @@ let DataGrid = (function() {
         }
         return tb;
     }
-
     function SortStringData(data, sortOrder) {
         if (sortOrder == SortOrders.Asc) {
             data.sort(function(a, b) {
@@ -1032,7 +1023,6 @@ let DataGrid = (function() {
             });
         }
     }
-
     function SortData(data, type, sortOrder) {
         if (type == DataTypes.String) {
             SortStringData(data, sortOrder);
@@ -1050,27 +1040,29 @@ let DataGrid = (function() {
         }
     }
 
-    // Parsing
-    function ParseData(value, dataType) {
-        if (dataType == DataTypes.String) {
-            return value;
-        }
-        if (dataType == DataTypes.Numeric) {
-            return parseFloat(value);
-        }
-        if (dataType == DataTypes.DateTime) {
-            return new Date(value);
-        }
-        if (dataType == DataTypes.Boolean) {
-            return !!value;
-        }
-    }
-
+	// Parsing
+	function ParseData(value, dataType) {
+			if (dataType == DataTypes.String) {
+				return value;
+			}
+			if (dataType == DataTypes.Numeric || dataType == DataTypes.Float) {
+				return parseFloat(value);
+			}
+			if(dataType == DataTypes.Integer){
+				return parseInt(value);
+			}
+			if (dataType == DataTypes.DateTime) {
+				return new Date(value);
+			}
+			if (dataType == DataTypes.Boolean) {
+				return !!value;
+			}
+		}
     function GetDefaultData(dataType) {
         if (dataType == DataTypes["String"]) {
             return "";
         }
-        if (dataType == DataTypes.Numeric) {
+        if (dataType == DataTypes.Numeric || dataType == DataTypes.Float || dataType == DataTypes.Integer) {
             return 0;
         }
         if (dataType == DataTypes.Boolean) {
@@ -1081,15 +1073,14 @@ let DataGrid = (function() {
         }
         return null;
     }
-
-    // Utilities
+	
+	// Utilities
     function TimeAction(action) {
         let a = Date.now();
         action();
         let b = Date.now();
         console.log("Action took ", b - a, "ms");
     }
-
     function StringFormat(str, objects) {
         let rtn = str;
         for (let i = 0; i < objects.length; i++) {
@@ -1099,27 +1090,26 @@ let DataGrid = (function() {
         return rtn;
     }
     let alphabetString = "abcdefghijklmnnopqrstuvwxyz0123456789";
-    let alphabet = alphabetString.split("");
+	let alphabet = alphabetString.split("");	
     let alphaLen = alphabet.length;
-
     function CreateGuid() {
-        let guidLen = 20;
-        let cnt = 0;
+		let guidLen = 20;
+		let cnt = 0;
         let guid = "";
-        while (guidLen) {
-            if (cnt === 4) {
-                guid = guid + "-";
-                cnt = 0;
-            }
-            guid = guid + alphabet[(alphaLen * Math.random()) | 0]
-            guidLen--;
-            cnt++;
-
-        }
+		while(guidLen){
+			if(cnt === 4){
+				guid = guid + "-";
+				cnt = 0;
+			}
+			guid = guid +  alphabet[(alphaLen * Math.random())|0]
+			guidLen--;
+			cnt++;
+			
+		}
         return guid;
     }
 
-    // JSON Utilities
+	// JSON Utilities
     function HeaderToJSON(header) {
         let jsonHeader = {};
         jsonHeader.Name = header.Name;
@@ -1130,15 +1120,14 @@ let DataGrid = (function() {
         jsonHeader.MaxLength = header.MaxLength;
         jsonHeader.MinValue = header.MinValue;
         jsonHeader.MaxValue = header.MaxValue;
-        jsonHeader.Data = header.Data;
+		jsonHeader.Data = header.Data;
         return jsonHeader;
     }
-
     function RowToJSON(row) {
         let jsonRow = {};
         jsonRow.ReadOnly = row.ReadOnly;
         jsonRow.Deletable = row.Deletable;
-        jsonRow.Data = row.Data;
+		jsonRow.Data = row.Data;
         jsonRow.Cells = [];
         for (let i = 0; i < row.Cells.length; i++) {
             let cell = row.Cells[i];
@@ -1147,59 +1136,60 @@ let DataGrid = (function() {
         }
         return jsonRow;
     }
-
     function CellToJSON(cell) {
         let jsonCell = {};
         jsonCell.ReadOnly = cell.ReadOnly;
         jsonCell.Value = cell.Value;
-        jsonCell.Data = cell.Data;
+		jsonCell.Data = cell.Data;
         return jsonCell;
     }
-
-    // Table Creation
-
+    
+	// Table Creation
+	
     function CreateTableHtml(data) {
 
-        data.Guid = CreateGuid();
-        data.RowHash = new Map();
-        data.CellHash = new Map();
+		data.Guid = CreateGuid();
+		data.RowHash = new Map();
+		data.CellHash = new Map();
+		
 
-
-        let pagerHtml = CreatePagerHtml(data);
+		let pagerHtml = CreatePagerHtml(data);
 
         let headers = CreateHeadersHtml(data);
         let rows = CreateRowsHtml(data);
-        let table = StringFormat(tableBase, [headers, rows, data.Guid, pagerHtml]);
+        let table = StringFormat(tableBase, [headers, rows, data.Guid,pagerHtml]);
 
         return table;
     }
 
-    function CreatePagerHtml(data) {
-        if (!data.DataGrid.Pageable) {
-            return "";
-        }
-
-        let pager = new Pager(data.Rows.length, data.DataGrid.PageNumber, data.DataGrid.ItemsPerPage);
-        let innerHtml = "";
-        if (pager.HasPreviousPage) {
-            innerHtml += pagerFirstBase;
-            innerHtml += StringFormat(pagerPrevBase, [pager.PreviousPage]);
-        }
-        if (pager.HasNextPage) {
-            innerHtml += StringFormat(pagerNextBase, [pager.NextPage]);
-            innerHtml += StringFormat(pagerLastBase, [pager.LastPage]);
-        }
-
-        if (pager.TotalItems > 0) {
-            innerHtml += StringFormat(pagerStatsBase, [pager.PageNumberOneBased, pager.LastPageOneBased, pager.StartingItemIndex, pager.EndingItemIndex, pager.TotalItems]);
-        }
-
-        let pagerHtml = StringFormat(pagerBase, [innerHtml, data.Guid]);
-        return pagerHtml;
-
-
-    }
-
+	function CreatePagerHtml(data){
+		if(!data.DataGrid.Pageable){
+			return "";
+		}
+		
+		let pager = new Pager(data.Rows.length, data.DataGrid.PageNumber, data.DataGrid.ItemsPerPage);
+		let innerHtml = "";
+		if (pager.HasPreviousPage)
+		{
+			innerHtml += pagerFirstBase;
+			innerHtml += StringFormat(pagerPrevBase,[pager.PreviousPage]);
+		}
+		if (pager.HasNextPage)
+		{
+			innerHtml += StringFormat(pagerNextBase,[pager.NextPage]);
+			innerHtml += StringFormat(pagerLastBase,[pager.LastPage]);
+		}
+    
+		if (pager.TotalItems > 0)
+		{
+			innerHtml += StringFormat(pagerStatsBase,[pager.PageNumberOneBased,pager.LastPageOneBased,pager.StartingItemIndex,pager.EndingItemIndex,pager.TotalItems]);
+		}
+		
+		let pagerHtml = StringFormat(pagerBase, [innerHtml, data.Guid]);
+		return pagerHtml;
+		
+		
+	}
     function CreateColumns(data) {
         data.Columns = [];
         for (let i = 0; i < data.Headers.length; i++) {
@@ -1225,7 +1215,7 @@ let DataGrid = (function() {
         return headerRow;
     }
 
-    // Row Creation Helpers
+	// Row Creation Helpers
     function CreateRowsHtml(data) {
 
         let rows = data.Rows;
@@ -1242,10 +1232,10 @@ let DataGrid = (function() {
     }
 
     function CreateRowHtml(row, data) {
-        row.Guid = CreateGuid();
+		row.Guid = CreateGuid();		
         row.TableGuid = row.Table.Guid;
-        row.Table.RowHash.set(row.Guid, row);
-
+		row.Table.RowHash.set(row.Guid, row);
+		
         let headers = data.Headers;
         let cells = row.Cells;
         let rowCells = "";
@@ -1264,20 +1254,20 @@ let DataGrid = (function() {
         let rowHtml = StringFormat(base, [rowCells, row.Guid, row.TableGuid, actions]);
         return rowHtml;
     }
-
-    // Cell Creation Helpers
+	
+	// Cell Creation Helpers
     function CreateCellHtml(cell, row, header) {
         cell.Guid = CreateGuid();
         cell.RowGuid = row.Guid;
         cell.TableGuid = row.TableGuid;
-        cell.Table.CellHash.set(cell.Guid, cell);
+        cell.Table.CellHash.set(cell.Guid,cell);
         return CreateMaskCellHtml(cell, row, header);
     }
-
+	
     function CreateInteractiveCell(cell, row, header) {
         if (header.Type == DataTypes.Boolean) {
             return CreateBooleanCellHtml(cell, row, header);
-        } else if (header.Type == DataTypes.Numeric) {
+        } else if (header.Type == DataTypes.Numeric || header.Type == DataTypes.Float || header.Type == DataTypes.Integer) {
             return CreateNumericCellHtml(cell, row, header);
         } else if (header.Type == DataTypes.DateTime) {
             return CreateDatetimeCellHtml(cell, row, header);
@@ -1374,7 +1364,7 @@ let DataGrid = (function() {
     }
 
 
-
-    return DataGrid;
+	
+	return DataGrid;
 
 })();
